@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#101a2b">
+<title>Corazón 3D · Exploración anatómica</title>
+<style>
+:root{--bg:#0d1728;--panel:#15243a;--line:#2b405c;--text:#edf4ff;--muted:#9db0c9;--red:#ff6471;--blue:#68aaff;--gold:#ffd17a}
+*{box-sizing:border-box}html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+#app{height:100%;display:grid;grid-template-rows:auto 1fr auto;background:radial-gradient(ellipse at 50% 42%,#21344c 0,#101c30 45%,#0b1422 100%)}
+header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #ffffff16;gap:12px}
+.brand{display:flex;align-items:center;gap:10px}.brand .heart{font-size:27px}.brand strong{display:block;font-size:15px;letter-spacing:.02em}.brand small{color:var(--muted);font-size:11px}
+.pill{border:1px solid var(--line);border-radius:99px;padding:7px 11px;color:#b9c9df;font-size:11px;white-space:nowrap}
+main{min-height:0;display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:12px;padding:12px}
+#stage{position:relative;min-height:0;border:1px solid #ffffff18;border-radius:20px;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#324b68 0,#1b2e46 48%,#101b2c 100%);touch-action:none}
+#view{width:100%;height:100%;display:block;touch-action:none}
+.overlay{position:absolute;z-index:2;left:14px;top:14px;display:flex;gap:7px;flex-wrap:wrap;max-width:calc(100% - 28px)}
+.chip{background:#0d1929d9;border:1px solid #ffffff22;color:#dce9fa;border-radius:99px;padding:8px 11px;font-size:11px;backdrop-filter:blur(8px)}
+#hint{position:absolute;bottom:14px;left:50%;transform:translateX(-50%);background:#0c1728d9;border:1px solid #ffffff24;padding:9px 13px;border-radius:99px;color:#c7d6e9;font-size:11px;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis}
+#side{background:#132238d9;border:1px solid #ffffff18;border-radius:20px;padding:15px;overflow:auto}
+.section-label{font-size:10px;text-transform:uppercase;letter-spacing:.13em;color:#8fa7c4;font-weight:700;margin:0 0 9px}
+h1{font-size:19px;margin:0 0 6px}#intro{font-size:12px;line-height:1.5;color:#b5c5d9;margin:0 0 15px}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#0c1728;padding:4px;border-radius:12px;margin-bottom:14px}
+.tabs button,.controls button,.reset{border:0;border-radius:9px;padding:10px 9px;color:#dce8f8;background:transparent;font-weight:650;font-size:12px;cursor:pointer}
+.tabs button.active{background:#345273;color:white;box-shadow:0 2px 9px #0004}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:0 0 15px}
+.controls button{background:#203751;border:1px solid #ffffff13}
+.controls button.primary{background:#8d3342;color:white}.controls button:disabled{opacity:.45}
+#info{border:1px solid #ffffff1c;border-radius:14px;padding:13px;background:#0e1a2b;margin-bottom:14px;min-height:145px}
+#info h2{font-size:16px;margin:0 0 8px}#info p{font-size:12px;line-height:1.55;color:#c3d1e2;margin:6px 0}
+.tag{display:inline-block;font-size:10px;border-radius:99px;padding:4px 8px;background:#273d56;color:#b9d6f5;margin-bottom:6px}
+#structureList{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.struct{background:#1c3049;border:1px solid #ffffff12;border-radius:9px;padding:8px;text-align:left;color:#d5e2f2;font-size:10px;cursor:pointer}
+.struct.active{border-color:#ffcf76;background:#57452d;color:#fff0c8}
+.legend{display:flex;gap:12px;flex-wrap:wrap;color:#aebfd4;font-size:10px;margin-top:12px}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px}
+footer{display:flex;justify-content:space-between;align-items:center;padding:8px 16px 12px;color:#8399b5;font-size:10px;gap:12px}
+#arStatus{color:#ffd78c}
+@media(max-width:760px){
+ #app{grid-template-rows:auto minmax(250px,46vh) 1fr auto}
+ header{padding:9px 12px}.brand strong{font-size:13px}.pill{font-size:9px;padding:6px 8px}
+ main{display:contents}
+ #stage{grid-row:2;border-radius:0;border-left:0;border-right:0}
+ #side{grid-row:3;border-radius:16px 16px 0 0;margin:0 8px;padding:12px;min-height:0}
+ #intro{display:none}.section-label{margin-bottom:6px}
+ #info{min-height:100px;padding:10px;margin-bottom:10px}#info p{font-size:11px}
+ #structureList{grid-template-columns:repeat(3,1fr)}.struct{font-size:9px;padding:7px 5px}
+ footer{font-size:9px;padding:6px 12px}
+}
+</style>
+</head>
+<body>
+<div id="app">
+<header><div class="brand"><span class="heart">🫀</span><div><strong>CORAZÓN 3D</strong><small>Laboratorio de anatomía y fisiología</small></div></div><span class="pill">INGENIERÍA BIOMÉDICA · INTERACTIVO</span></header>
+<main>
+<section id="stage" aria-label="Modelo 3D interactivo del corazón">
+ <canvas id="view"></canvas>
+ <div class="overlay"><span class="chip" id="modeChip">ANATOMÍA EXTERNA</span><span class="chip">Arrastra para girar · Pellizca para zoom</span></div>
+ <div id="hint">Toca una estructura del corazón para explorarla</div>
+</section>
+<aside id="side">
+ <div class="section-label">Exploración guiada</div><h1>Conoce tu corazón</h1>
+ <p id="intro">Explora las estructuras anatómicas en un modelo tridimensional. Selecciona cada componente para consultar su función y su papel en la circulación.</p>
+ <div class="tabs"><button id="external" class="active">Externa</button><button id="internal">Interna</button></div>
+ <div class="controls"><button id="arBtn" class="primary">◎ Ver en mi espacio (AR)</button><button id="reset">↺ Reiniciar vista</button></div>
+ <div id="info"><span class="tag">INICIO</span><h2>La bomba doble del cuerpo</h2><p>El corazón impulsa la sangre hacia los pulmones para oxigenarla y hacia el resto del organismo para distribuir oxígeno y nutrientes.</p><p><b>Selecciona</b> una estructura en el modelo o en la lista inferior.</p></div>
+ <div class="section-label">Estructuras · <span id="count">7</span></div><div id="structureList"></div>
+ <div class="legend"><span><i class="dot" style="background:#e85b63"></i>Sangre oxigenada</span><span><i class="dot" style="background:#5798df"></i>Sangre desoxigenada</span><span><i class="dot" style="background:#ffd17a"></i>Selección</span></div>
+</aside>
+</main>
+<footer><span>Modelo didáctico esquemático · No sustituye atlas anatómicos ni evaluación clínica.</span><span id="arStatus">3D táctil disponible · AR según dispositivo</span></footer>
+</div>
+<script type="module">
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+
+const canvas=document.querySelector('#view'), stage=document.querySelector('#stage');
+const scene=new THREE.Scene(); scene.fog=new THREE.Fog(0x17283d,8,18);
+const camera=new THREE.PerspectiveCamera(35,1,.1,100); camera.position.set(5.2,3.0,7.4);
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true}); renderer.setPixelRatio(Math.min(devicePixelRatio,2)); renderer.outputColorSpace=THREE.SRGBColorSpace; renderer.toneMapping=THREE.ACESFilmicToneMapping;
+scene.add(new THREE.HemisphereLight(0xdceaff,0x43232d,2.1));
+const key=new THREE.DirectionalLight(0xffffff,3.2);key.position.set(4,7,6);scene.add(key);
+const rim=new THREE.DirectionalLight(0x75a9ff,2.2);rim.position.set(-5,2,-4);scene.add(rim);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.target.set(0,.1,0);controls.minDistance=3.5;controls.maxDistance=12;controls.maxPolarAngle=Math.PI*.88;
+const heart=new THREE.Group();scene.add(heart);
+const externalGroup=new THREE.Group(),internalGroup=new THREE.Group();heart.add(externalGroup,internalGroup);
+const mats={
+ muscle:new THREE.MeshPhysicalMaterial({color:0xc83f4b,roughness:.58,clearcoat:.16}),
+ muscle2:new THREE.MeshPhysicalMaterial({color:0xe35c61,roughness:.52}),
+ red:new THREE.MeshStandardMaterial({color:0xe65b64,roughness:.4}),
+ redLight:new THREE.MeshStandardMaterial({color:0xf18b8e,roughness:.38}),
+ blue:new THREE.MeshStandardMaterial({color:0x5797d5,roughness:.4}),
+ blueLight:new THREE.MeshStandardMaterial({color:0x8cb9e7,roughness:.4}),
+ darkRed:new THREE.MeshStandardMaterial({color:0x9f2637,roughness:.5}),
+ chamberR:new THREE.MeshPhysicalMaterial({color:0xd85a61,roughness:.42,side:THREE.DoubleSide}),
+ chamberL:new THREE.MeshPhysicalMaterial({color:0xef8580,roughness:.42,side:THREE.DoubleSide}),
+ valve:new THREE.MeshStandardMaterial({color:0xf4c7a5,roughness:.55,side:THREE.DoubleSide}),
+ septum:new THREE.MeshStandardMaterial({color:0xf0a09a,roughness:.7,side:THREE.DoubleSide})
+};
+const parts={}; const pickables=[];
+function materialClone(m){return m.clone()}
+function register(id,name,group,mesh,desc,fn,mode){mesh.userData={id,name,desc,fn,mode};group.add(mesh);(parts[id]??=[]).push(mesh);pickables.push(mesh);return mesh}
+function ellipsoid(id,name,group,pos,scale,mat,desc,fn,mode='both'){let m=new THREE.Mesh(new THREE.SphereGeometry(1,40,28),materialClone(mat));m.position.set(...pos);m.scale.set(...scale);m.castShadow=true;return register(id,name,group,m,desc,fn,mode)}
+function tube(id,name,group,points,radius,mat,desc,fn,mode='external'){let curve=new THREE.CatmullRomCurve3(points.map(p=>new THREE.Vector3(...p)));let m=new THREE.Mesh(new THREE.TubeGeometry(curve,64,radius,16,false),materialClone(mat));m.castShadow=true;return register(id,name,group,m,desc,fn,mode)}
+function makeChamber(id,name,pos,scale,mat,desc,fn){return ellipsoid(id,name,internalGroup,pos,scale,mat,desc,fn,'internal')}
+const desc={
+ myocardium:['Miocardio','Es la capa muscular del corazón. Su contracción coordinada genera la presión necesaria para impulsar la sangre; su grosor es mayor en el ventrículo izquierdo.'],
+ aorta:['Aorta','La arteria de mayor calibre. Recibe sangre oxigenada del ventrículo izquierdo y la distribuye a la circulación sistémica.'],
+ pulmonaryArtery:['Arteria pulmonar','Transporta sangre desoxigenada desde el ventrículo derecho hacia los pulmones, donde ocurre el intercambio gaseoso.'],
+ pulmonaryVeins:['Venas pulmonares','Generalmente cuatro venas llevan sangre oxigenada desde los pulmones hasta la aurícula izquierda.'],
+ venaCava:['Venas cavas superior e inferior','Retornan sangre desoxigenada desde la parte superior e inferior del cuerpo hacia la aurícula derecha.'],
+ ra:['Aurícula derecha','Recibe el retorno venoso sistémico a través de las venas cavas y lo envía al ventrículo derecho por la válvula tricúspide.'],
+ la:['Aurícula izquierda','Recibe sangre oxigenada de las venas pulmonares y la dirige al ventrículo izquierdo a través de la válvula mitral.'],
+ rv:['Ventrículo derecho','Bombea sangre desoxigenada hacia los pulmones a través de la válvula pulmonar y el tronco pulmonar.'],
+ lv:['Ventrículo izquierdo','Genera la presión de la circulación sistémica y expulsa sangre oxigenada hacia la aorta.'],
+ tricuspid:['Válvula tricúspide','Entre aurícula y ventrículo derechos. Sus valvas permiten el flujo hacia el ventrículo y evitan el reflujo durante la sístole.'],
+ mitral:['Válvula mitral o bicúspide','Entre aurícula y ventrículo izquierdos. Sus dos valvas evitan que la sangre regrese a la aurícula durante la contracción ventricular.'],
+ pulmonaryValve:['Válvula pulmonar','En la salida del ventrículo derecho. Impide el retorno de sangre desde el tronco pulmonar al ventrículo.'],
+ aorticValve:['Válvula aórtica','En la salida del ventrículo izquierdo. Se abre durante la sístole y evita el reflujo desde la aorta durante la diástole.'],
+ ivs:['Tabique interventricular','Pared muscular que separa ambos ventrículos y evita la mezcla de sangre; contiene parte del sistema de conducción.'],
+ ias:['Tabique interauricular','Pared que separa las aurículas derecha e izquierda y mantiene diferenciados ambos circuitos.']
+};
+const fn='Importancia: mantiene la circulación unidireccional y la separación funcional entre los circuitos pulmonar y sistémico.';
+/* Cuerpo miocárdico: masa muscular cónica, con punta inferior dirigida a la izquierda anatómica. */
+ellipsoid('myocardium','Miocardio',externalGroup,[0,-.12,0],[1.35,1.75,.78],mats.muscle,desc.myocardium[1],fn,'external');
+ellipsoid('myocardium','Miocardio',externalGroup,[-.38,-.62,.05],[.92,1.02,.72],mats.muscle2,desc.myocardium[1],fn,'external');
+/* cámaras internas en disposición anatómica aproximada: derecha del corazón aparece a la izquierda del observador */
+makeChamber('ra','Aurícula derecha',[-.62,.58,.25],[.58,.62,.48],mats.chamberR,desc.ra[1],fn);
+makeChamber('la','Aurícula izquierda',[.55,.63,.20],[.58,.59,.46],mats.chamberL,desc.la[1],fn);
+makeChamber('rv','Ventrículo derecho',[-.42,-.48,.27],[.64,.98,.48],mats.chamberR,desc.rv[1],fn);
+makeChamber('lv','Ventrículo izquierdo',[.42,-.52,.22],[.68,1.13,.49],mats.chamberL,desc.lv[1],fn);
+ellipsoid('ivs','Tabique interventricular',internalGroup,[0,-.45,.33],[.16,1.0,.36],mats.septum,desc.ivs[1],fn,'internal');
+ellipsoid('ias','Tabique interauricular',internalGroup,[0,.58,.42],[.13,.48,.28],mats.septum,desc.ias[1],fn,'internal');
+[['tricuspid','Válvula tricúspide',[-.48,.03,.67]],['mitral','Válvula mitral o bicúspide',[.48,.04,.67]],['pulmonaryValve','Válvula pulmonar',[-.42,.35,.45]],['aorticValve','Válvula aórtica',[.38,.35,.48]]].forEach(([id,n,p])=>{
+ let g=new THREE.Group();g.position.set(...p);let tor=new THREE.Mesh(new THREE.TorusGeometry(.23,.055,12,36),materialClone(mats.valve));tor.rotation.x=Math.PI/2;register(id,n,internalGroup,g,desc[id][1],fn,'internal');g.add(tor);
+ for(let i=0;i<3;i++){let v=new THREE.Mesh(new THREE.SphereGeometry(.075,16,12),materialClone(mats.valve));v.position.set(Math.cos(i*2.094)*.17,Math.sin(i*2.094)*.17,0);g.add(v)}
+});
+/* Vasos externos */
+tube('aorta','Aorta',externalGroup,[[.1,.82,0],[.12,1.55,0],[.25,1.9,0],[.55,2.12,0],[.95,2.02,0],[1.18,1.75,0]],.22,mats.red,desc.aorta[1],fn);
+tube('aorta','Aorta',externalGroup,[[.22,1.83,0],[.15,2.22,0],[.12,2.38,0]],.075,mats.redLight,desc.aorta[1],fn);
+tube('aorta','Aorta',externalGroup,[[.48,2.02,0],[.5,2.35,0]],.07,mats.redLight,desc.aorta[1],fn);
+tube('aorta','Aorta',externalGroup,[[.78,1.98,0],[.9,2.28,0]],.07,mats.redLight,desc.aorta[1],fn);
+tube('pulmonaryArtery','Arteria pulmonar',externalGroup,[[-.05,.72,.3],[-.35,1.08,.45],[-.75,1.35,.42],[-1.25,1.42,.35],[-1.55,1.38,.3]],.19,mats.blue,desc.pulmonaryArtery[1],fn);
+tube('pulmonaryArtery','Arteria pulmonar',externalGroup,[[-.5,1.15,.4],[-.45,1.48,.42],[-.35,1.7,.35]],.105,mats.blueLight,desc.pulmonaryArtery[1],fn);
+tube('venaCava','Venas cavas superior e inferior',externalGroup,[[-.78,1.95,-.05],[-.88,1.25,-.05],[-.9,.55,-.02],[-.88,-.12,0]],.19,mats.blue,desc.venaCava[1],fn);
+tube('venaCava','Venas cavas superior e inferior',externalGroup,[[-.72,-1.5,-.02],[-.8,-.9,-.02],[-.88,-.15,0]],.19,mats.blue,desc.venaCava[1],fn);
+tube('pulmonaryVeins','Venas pulmonares',externalGroup,[[.65,.55,-.25],[1.05,.48,-.32],[1.38,.42,-.3],[1.55,.38,-.25]],.12,mats.redLight,desc.pulmonaryVeins[1],fn);
+tube('pulmonaryVeins','Venas pulmonares',externalGroup,[[.62,.18,-.3],[1.05,.05,-.35],[1.38,-.03,-.3],[1.55,-.08,-.25]],.12,mats.redLight,desc.pulmonaryVeins[1],fn);
+/* Vasos coronarios superficiales */
+const coronaryMat=new THREE.MeshStandardMaterial({color:0x8c2637,roughness:.4});
+tube('myocardium','Miocardio',externalGroup,[[-.9,.15,.63],[-.5,.38,.75],[-.12,.25,.78],[.25,.12,.75],[.65,-.1,.65]],.035,coronaryMat,desc.myocardium[1],fn);
+tube('myocardium','Miocardio',externalGroup,[[-.1,.25,.78],[-.2,-.15,.79],[-.35,-.55,.72],[-.48,-.9,.58]],.028,coronaryMat,desc.myocardium[1],fn);
+tube('myocardium','Miocardio',externalGroup,[[.25,.12,.75],[.42,-.28,.72],[.5,-.65,.62],[.38,-1.0,.5]],.027,coronaryMat,desc.myocardium[1],fn);
+/* Modo interno: el contorno exterior se atenúa para mostrar cavidades */
+const shell=parts.myocardium;
+const originalColors=new Map();
+function setMode(mode){
+ currentMode=mode; document.querySelector('#external').classList.toggle('active',mode==='external');document.querySelector('#internal').classList.toggle('active',mode==='internal');
+ document.querySelector('#modeChip').textContent=mode==='external'?'ANATOMÍA EXTERNA':'ANATOMÍA INTERNA';
+ for(const [id,arr] of Object.entries(parts)) for(const m of arr){let show=(m.userData.mode==='both'||m.userData.mode===mode);m.visible=show;if(id==='myocardium'&&mode==='internal'){m.visible=true;m.material.transparent=true;m.material.opacity=.16;}else if(id==='myocardium'){m.material.transparent=false;m.material.opacity=1;}}
+ if(mode==='external'){for(const id of ['ra','la','rv','lv','tricuspid','mitral','pulmonaryValve','aorticValve','ivs','ias']) (parts[id]||[]).forEach(m=>m.visible=false);}
+ else {for(const id of ['aorta','pulmonaryArtery','pulmonaryVeins','venaCava']) (parts[id]||[]).forEach(m=>m.visible=false);}
+ selected=null;resetHighlight();renderInfo(null);buildList();
+}
+let currentMode='external',selected=null;
+function resetHighlight(){for(const arr of Object.values(parts))for(const m of arr){if(m.material?.emissive)m.material.emissive.setHex(0x000000);m.scale.set(m.scale.x,m.scale.y,m.scale.z)}}
+function select(id){
+ const arr=parts[id];if(!arr||!arr.length)return;
+ selected=id;resetHighlight();
+ arr.forEach(m=>{if(m.material?.emissive){m.material.emissive.setHex(0x8b5b12);m.material.emissiveIntensity=.9;}});
+ const d=desc[id];renderInfo({id,name:d[0],description:d[1]});buildList();
+}
+function renderInfo(item){
+ const el=document.querySelector('#info');
+ if(!item){el.innerHTML='<span class="tag">INICIO</span><h2>La bomba doble del cuerpo</h2><p>El corazón impulsa la sangre hacia los pulmones para oxigenarla y hacia el resto del organismo para distribuir oxígeno y nutrientes.</p><p><b>Selecciona</b> una estructura en el modelo o en la lista inferior.</p>';return}
+ el.innerHTML=`<span class="tag">${currentMode==='external'?'ANATOMÍA EXTERNA':'ANATOMÍA INTERNA'}</span><h2>${item.name}</h2><p>${item.description}</p><p><b>Importancia:</b> ${fn}</p>`;
+}
+const names={external:['myocardium','aorta','pulmonaryArtery','pulmonaryVeins','venaCava'],internal:['ra','la','rv','lv','tricuspid','mitral','pulmonaryValve','aorticValve','ivs','ias']};
+function buildList(){let ids=names[currentMode];document.querySelector('#count').textContent=ids.length;document.querySelector('#structureList').innerHTML=ids.map(id=>`<button class="struct ${selected===id?'active':''}" data-id="${id}">${desc[id][0]}</button>`).join('');document.querySelectorAll('.struct').forEach(b=>b.addEventListener('click',()=>select(b.dataset.id)));}
+document.querySelector('#external').onclick=()=>setMode('external');document.querySelector('#internal').onclick=()=>setMode('internal');
+document.querySelector('#reset').onclick=()=>{controls.reset();camera.position.set(5.2,3,7.4);controls.target.set(0,.1,0);heart.position.set(0,0,0);heart.scale.setScalar(1);setMode(currentMode);};
+const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
+let down=null;
+canvas.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY}});
+canvas.addEventListener('pointerup',e=>{if(!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>7)return;let r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height*2-1));raycaster.setFromCamera(pointer,camera);let hit=raycaster.intersectObjects(pickables.filter(o=>o.visible),true)[0];if(hit){let obj=hit.object;while(obj&&!obj.userData.id)obj=obj.parent;if(obj?.userData.id){if(obj.userData.mode==='internal'&&currentMode!=='internal')setMode('internal');if(obj.userData.mode==='external'&&currentMode!=='external')setMode('external');select(obj.userData.id)}}});
+function resize(){let w=stage.clientWidth,h=stage.clientHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}new ResizeObserver(resize).observe(stage);resize();
+setMode('external');
+renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera)});
+
+/* WebXR immersive-ar con hit-test: requiere HTTPS, navegador compatible y permisos de cámara. */
+let xrSession=null,hitSource=null,reticle;
+document.querySelector('#arBtn').onclick=async()=>{
+ const status=document.querySelector('#arStatus'),btn=document.querySelector('#arBtn');
+ if(!navigator.xr){status.textContent='AR inmersiva no disponible aquí: usa el modelo 3D táctil.';return}
+ try{
+  const supported=await navigator.xr.isSessionSupported('immersive-ar');
+  if(!supported){status.textContent='Este navegador no admite WebXR AR. El modo 3D sigue disponible.';return}
+  xrSession=await navigator.xr.requestSession('immersive-ar',{requiredFeatures:['hit-test'],optionalFeatures:['dom-overlay'],domOverlay:{root:document.body}});
+  await renderer.xr.setSession(xrSession);controls.enabled=false;
+  const viewer=await xrSession.requestReferenceSpace('viewer');hitSource=await xrSession.requestHitTestSource({space:viewer});
+  const ref=await xrSession.requestReferenceSpace('local');reticle=new THREE.Mesh(new THREE.RingGeometry(.12,.16,32),new THREE.MeshBasicMaterial({color:0xffd17a,side:THREE.DoubleSide}));reticle.rotation.x=-Math.PI/2;reticle.matrixAutoUpdate=false;reticle.visible=false;scene.add(reticle);
+  xrSession.addEventListener('select',()=>{if(reticle.visible){heart.position.setFromMatrixPosition(reticle.matrix);heart.quaternion.setFromRotationMatrix(reticle.matrix);heart.scale.setScalar(.35)}});
+  xrSession.addEventListener('end',()=>{xrSession=null;hitSource=null;controls.enabled=true;heart.position.set(0,0,0);heart.scale.setScalar(1);status.textContent='Sesión AR finalizada.'});
+  renderer.setAnimationLoop((time,frame)=>{if(frame&&hitSource){const hits=frame.getHitTestResults(hitSource);if(hits.length){const pose=hits[0].getPose(ref);reticle.visible=true;reticle.matrix.fromArray(pose.transform.matrix)}else reticle.visible=false;}renderer.render(scene,camera)});
+  status.textContent='Busca una superficie y toca para colocar el corazón.';btn.textContent='AR activa';
+ }catch(err){status.textContent='No se pudo iniciar AR. Comprueba HTTPS y permisos de cámara.';console.warn(err)}
+};
+</script>
+</body></html>
